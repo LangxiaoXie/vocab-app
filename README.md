@@ -1,6 +1,6 @@
 # Vocab App
 
-A spaced-repetition vocabulary learning web app for **German**, **French**, **Spanish**, and **Latin** — inspired by [Cling (词灵)](https://next.clingword.com). Runs entirely in the browser with no backend required.
+A spaced-repetition vocabulary learning web app for **German**, **French**, **Spanish**, and **Latin**. Runs entirely in the browser with no backend required.
 
 ## Features
 
