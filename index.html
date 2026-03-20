@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vocab · DE · FR · ES · LA</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="vocab-de.js"></script>
+<script src="vocab-la.js"></script>
+<script src="vocab-data.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--black:#111;--gray:#888;--light:#f5f5f5;--border:#ebebeb;--card-r:16px}
+body{font-family:'Inter',sans-serif;background:#fff;color:var(--black);height:100vh;display:flex;overflow:hidden}
+
+/* ── SIDEBAR ── */
+#sidebar{width:260px;min-width:260px;height:100vh;background:#fafafa;border-right:1px solid var(--border);display:flex;flex-direction:column}
+#sb-header{padding:18px 16px 12px;border-bottom:1px solid var(--border)}
+.app-title{font-size:13px;font-weight:700;letter-spacing:-.3px}
+.lang-row{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+.lang-btn{flex:1;min-width:44px;padding:5px 4px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:#999;text-align:center}
+.lang-btn.active{background:var(--black);border-color:var(--black);color:#fff}
+
+/* Scroll-snap list */
+#list-scroll-wrap{flex:1;position:relative;overflow:hidden}
+#list-scroll-cursor{position:absolute;left:4px;top:50%;transform:translateY(-50%);width:3px;height:74px;background:var(--black);border-radius:2px;pointer-events:none;z-index:10;transition:opacity .2s}
+#list-scroll{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;scroll-behavior:smooth;position:relative}
+#list-scroll::-webkit-scrollbar{display:none}
+.list-pad{height:calc(50% - 37px)}
+.sb-item{height:68px;display:flex;flex-direction:column;justify-content:center;padding:0 16px 0 20px;cursor:pointer;scroll-snap-align:center;font-size:13px;font-weight:500;color:#ccc;border-radius:12px;margin:3px 8px 3px 14px;transition:all .25s;user-select:none}
+.sb-item.active{background:var(--black);color:#fff}
+.sb-item.near{color:#888}
+.sb-item-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-item-meta{font-size:10px;opacity:.6;margin-top:2px}
+
+#sb-footer{padding:12px;border-top:1px solid var(--border);display:flex;gap:6px}
+.sb-foot-btn{flex:1;padding:8px 4px;border-radius:9px;border:1.5px solid var(--border);background:#fff;font-size:11px;font-weight:500;cursor:pointer;color:#666;display:flex;align-items:center;justify-content:center;gap:4px;transition:background .15s}
+.sb-foot-btn:hover{background:#f0f0f0}
+.cefr-bar{padding:8px 16px 6px;border-top:1px solid var(--border)}
+.cefr-label{font-size:9px;color:#bbb;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}
+.cefr-track{height:4px;background:#eee;border-radius:2px;overflow:hidden}
+.cefr-fill{height:100%;background:var(--black);border-radius:2px;transition:width .5s}
+.cefr-level-text{font-size:10px;color:#999;margin-top:3px}
+
+/* ── MAIN ── */
+#main{flex:1;height:100vh;overflow-y:auto;position:relative}
+#view-dashboard{padding:36px 48px 60px;max-width:880px}
+.list-title-big{font-size:70px;font-weight:700;letter-spacing:-3px;line-height:1;color:var(--black);margin-bottom:12px}
+.list-meta{font-size:12px;color:#aaa;display:flex;gap:18px;margin-bottom:32px}
+.list-meta b{color:var(--black);font-weight:600}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:36px}
+.stat-box{padding:20px 0 20px 4px;border-right:1px solid var(--border)}
+.stat-box:not(:first-child){padding-left:22px}
+.stat-box:last-child{border-right:none}
+.stat-label{font-size:10px;color:#aaa;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+.stat-val{font-size:36px;font-weight:300;color:var(--black);line-height:1}
+.stat-unit{font-size:14px;color:#888;margin-left:1px}
+
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.chart-card{background:#fafafa;border-radius:var(--card-r);padding:20px;border:1px solid #f0f0f0}
+.chart-card.wide{grid-column:1/-1}
+.chart-card.tall .chart-wrap{height:200px}
+.chart-title{font-size:10px;font-weight:600;color:#aaa;letter-spacing:.6px;text-transform:uppercase;margin-bottom:14px}
+.chart-wrap{position:relative;height:160px}
+.heatmap-months{font-size:9px;color:#bbb;letter-spacing:.3px;margin-bottom:3px;display:flex;gap:18px}
+.heatmap-grid{display:grid;grid-template-columns:repeat(52,1fr);gap:2px}
+.hm-cell{aspect-ratio:1;border-radius:2px;background:#f0f0f0}
+.hm-cell[data-v="1"]{background:#d1e8c7}
+.hm-cell[data-v="2"]{background:#8abb74}
+.hm-cell[data-v="3"]{background:#4d9e30}
+.hm-cell[data-v="4"]{background:#256615}
+.prog-list{display:flex;flex-direction:column;gap:9px}
+.prog-item-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+.prog-name{font-weight:500;color:#333}
+.prog-pct{color:#aaa}
+.prog-track{height:5px;background:#efefef;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:var(--black);border-radius:3px;transition:width .4s}
+
+.cta-wrap{display:flex;justify-content:flex-end;margin-top:8px}
+.cta{background:var(--black);color:#fff;border:none;padding:13px 26px;border-radius:50px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s}
+.cta:hover{opacity:.85}
+.cta svg{transition:transform .15s}
+.cta:hover svg{transform:translateX(3px)}
+.locked-badge{background:#f0f0f0;color:#888;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:6px}
+
+/* ── FLASHCARD ── */
+#view-fc{display:none;height:100vh;flex-direction:column}
+.fc-top{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.fc-back{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#555}
+.fc-back:hover{background:#f5f5f5}
+.fc-ctrs{display:flex;gap:24px}
+.fc-ctr{text-align:center}
+.fc-ctr-v{font-size:18px;font-weight:300}
+.fc-ctr-l{font-size:9px;color:#bbb;text-transform:uppercase;letter-spacing:.4px}
+.fc-progress-bar{height:2px;background:#f0f0f0}
+.fc-progress-fill{height:100%;background:var(--black);transition:width .3s}
+
+.fc-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;cursor:pointer;user-select:none;max-width:640px;margin:0 auto;width:100%;position:relative}
+.fc-word{font-size:58px;font-weight:700;color:#0f1729;letter-spacing:-2px;text-align:center;margin-bottom:12px;line-height:1.05}
+.fc-phonetic{display:inline-flex;align-items:center;gap:7px;background:#f4f4f4;border-radius:20px;padding:5px 13px;font-size:13px;color:#666;margin-bottom:24px}
+.fc-phonetic button{background:none;border:none;cursor:pointer;color:#999;padding:0;display:flex;align-items:center}
+.fc-hint{font-size:12px;color:#ccc;letter-spacing:.2px;margin-top:8px}
+.fc-reveal{width:100%;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none}
+.fc-reveal.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.fc-example{border-left:3px solid #e8e8e8;padding-left:14px;margin-bottom:18px}
+.fc-ex-sent{font-size:15px;font-style:italic;color:#444;margin-bottom:3px}
+.fc-ex-tr{font-size:12px;color:#aaa}
+.fc-def{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.fc-pos-badge{background:var(--black);color:#fff;font-size:9px;font-weight:700;letter-spacing:.7px;padding:3px 9px;border-radius:4px;text-transform:uppercase}
+.fc-trans{font-size:15px;color:#333;font-weight:500}
+
+.fc-foot{padding:20px 28px;display:flex;justify-content:center}
+.fc-btns{display:flex;gap:9px;opacity:0;transform:translateY(6px);transition:all .3s;pointer-events:none}
+.fc-btns.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.fc-btn{padding:12px 22px;border-radius:13px;border:none;cursor:pointer;font-size:12px;font-weight:600;min-width:85px;display:flex;flex-direction:column;align-items:center;gap:1px;transition:transform .1s,filter .15s}
+.fc-btn:hover{filter:brightness(.93);transform:translateY(-1px)}
+.fc-btn-key{font-size:9px;font-weight:400;opacity:.55}
+.btn-again{background:#fde8e8;color:#b71c1c}
+.btn-hard{background:#fff3e0;color:#b45309}
+.btn-ok{background:#e8f5e2;color:#2e7d32}
+.btn-easy{background:#e3effe;color:#1565c0}
+
+/* ── DONE ── */
+#view-done{display:none;height:100vh;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
+.done-title{font-size:32px;font-weight:700;margin-bottom:8px}
+.done-sub{font-size:14px;color:#aaa;margin-bottom:32px}
+.done-stats{display:flex;gap:36px;margin-bottom:32px}
+.done-sval{font-size:30px;font-weight:300}
+.done-slbl{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.4px}
+.done-actions{display:flex;gap:12px}
+.btn-share{background:#f5f5f5;color:#333;border:none;padding:12px 22px;border-radius:50px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s}
+.btn-share:hover{background:#ebebeb}
+
+/* ── PURCHASE MODAL ── */
+#purchase-modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.45);backdrop-filter:blur(5px);align-items:center;justify-content:center}
+.purchase-panel{background:#fff;border-radius:20px;padding:32px;width:400px;max-width:92vw;max-height:90vh;overflow-y:auto}
+.purchase-title{font-size:20px;font-weight:700;margin-bottom:4px}
+.purchase-sub{font-size:13px;color:#aaa;margin-bottom:24px}
+.purchase-section{margin-bottom:22px}
+.purchase-section-title{font-size:10px;font-weight:700;color:#aaa;letter-spacing:.7px;text-transform:uppercase;margin-bottom:10px}
+.pack-option{border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:space-between}
+.pack-option:hover{border-color:#aaa}
+.pack-option.selected{border-color:var(--black);background:#fafafa}
+.pack-name{font-size:13px;font-weight:600}
+.pack-desc{font-size:11px;color:#888;margin-top:1px}
+.pack-price{font-size:16px;font-weight:700;color:var(--black)}
+.pack-price span{font-size:10px;font-weight:400;color:#aaa}
+.streak-box{background:#fff9e6;border:1.5px solid #fce196;border-radius:12px;padding:16px;display:flex;align-items:center;justify-content:space-between}
+.streak-box-left{display:flex;align-items:center;gap:10px}
+.streak-fire{font-size:24px}
+.streak-info-title{font-size:13px;font-weight:600}
+.streak-info-sub{font-size:11px;color:#888}
+.btn-buy-streak{background:var(--black);color:#fff;border:none;padding:9px 18px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer}
+.balance-row{background:#f5f5f5;border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.balance-label{font-size:12px;color:#666}
+.balance-val{font-size:14px;font-weight:700}
+.btn-purchase-confirm{width:100%;padding:14px;border-radius:12px;border:none;background:var(--black);color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px}
+.btn-purchase-confirm:hover{opacity:.85}
+.btn-purchase-cancel{width:100%;padding:10px;border-radius:12px;border:1.5px solid var(--border);background:#fff;color:#666;font-size:13px;font-weight:500;cursor:pointer;margin-top:8px}
+.purchase-close{position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#666;font-size:12px}
+.words-unlocked-badge{background:#e8f5e2;color:#2e7d32;font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600}
+
+/* ── SETTINGS ── */
+#view-settings{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.35);backdrop-filter:blur(4px)}
+.settings-panel{position:absolute;left:0;top:0;bottom:0;width:340px;background:#fff;border-right:1px solid var(--border);padding:28px 24px;overflow-y:auto;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.settings-panel.open{transform:translateX(0)}
+.settings-h{font-size:17px;font-weight:700;margin-bottom:24px}
+.settings-sec-title{font-size:10px;font-weight:700;color:#aaa;letter-spacing:.7px;text-transform:uppercase;margin-bottom:10px}
+.settings-sec{margin-bottom:22px}
+.settings-row{margin-bottom:12px}
+.settings-label{font-size:12px;font-weight:500;color:#333;display:flex;justify-content:space-between;margin-bottom:4px}
+.settings-label span{color:#999;font-weight:400}
+.settings-sub{font-size:10px;color:#aaa;margin-top:2px}
+input[type=range]{width:100%;accent-color:var(--black)}
+.tick-row{display:flex;justify-content:space-between;font-size:9px;color:#bbb;margin-top:1px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f5f5}
+.toggle-label{font-size:12px;font-weight:500;color:#333}
+.toggle-sub{font-size:10px;color:#aaa;margin-top:1px}
+.toggle{width:38px;height:22px;background:#ddd;border-radius:11px;cursor:pointer;transition:background .2s;position:relative;flex-shrink:0}
+.toggle.on{background:var(--black)}
+.toggle::after{content:'';width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{left:19px}
+.save-btn{width:100%;padding:12px;border-radius:10px;border:none;background:var(--black);color:#fff;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px}
+.import-box{border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s}
+.import-box:hover{border-color:#bbb}
+.import-box-title{font-size:12px;font-weight:600;color:#555;margin-bottom:3px}
+.import-box-sub{font-size:10px;color:#aaa}
+
+.retention-legend-wrap{height:220px}
+.retention-legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px}
+.ret-leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#555}
+.ret-leg-dot{width:24px;height:3px;border-radius:2px}
+
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#e0e0e0;border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<div id="sidebar">
+  <div id="sb-header">
+    <div class="app-title">Vocab</div>
+    <div class="lang-row" id="lang-row"></div>
+  </div>
+  <div class="cefr-bar">
+    <div class="cefr-label">CEFR Level</div>
+    <div class="cefr-track"><div class="cefr-fill" id="cefr-fill" style="width:0%"></div></div>
+    <div class="cefr-level-text" id="cefr-level-text">A1</div>
+  </div>
+  <div id="list-scroll-wrap">
+    <div id="list-scroll-cursor"></div>
+    <div id="list-scroll">
+      <div class="list-pad"></div>
+      <div id="list-items"></div>
+      <div class="list-pad"></div>
+    </div>
+  </div>
+  <div id="sb-footer">
+    <button class="sb-foot-btn" onclick="app.openPurchase()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Unlock
+    </button>
+    <button class="sb-foot-btn" onclick="app.openSettings()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings
+    </button>
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div id="main">
+  <!-- Dashboard -->
+  <div id="view-dashboard">
+    <div class="list-title-big" id="dash-title">—</div>
+    <div class="list-meta"><span>Total <b id="dash-total">0</b> words</span><span>Mastered <b id="dash-mastered">0</b></span><span id="dash-unlocked-info"></span></div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-label">To Review</div><div class="stat-val" id="dash-review">0</div></div>
+      <div class="stat-box"><div class="stat-label">New Today</div><div class="stat-val" id="dash-new">0</div></div>
+      <div class="stat-box"><div class="stat-label">Streak</div><div class="stat-val" id="dash-streak">0<span class="stat-unit">d</span></div></div>
+      <div class="stat-box"><div class="stat-label">Progress</div><div class="stat-val" id="dash-pct">0<span class="stat-unit">%</span></div><div style="font-size:10px;color:#bbb;margin-top:2px" id="dash-pct-sub"></div></div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card"><div class="chart-title">Mastery Breakdown</div><div class="chart-wrap"><canvas id="ch-donut"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">30-Day Activity</div><div class="chart-wrap"><canvas id="ch-line"></canvas></div></div>
+      <div class="chart-card wide"><div class="chart-title">Activity Heatmap · last 52 weeks</div><div class="heatmap-months" id="hm-months"></div><div class="heatmap-grid" id="hm-grid"></div></div>
+      <div class="chart-card"><div class="chart-title">Daily New vs. Review (14d)</div><div class="chart-wrap"><canvas id="ch-bar"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">All Lists Progress</div><div class="prog-list" id="all-prog"></div></div>
+      <div class="chart-card wide tall"><div class="chart-title">Memory Retention · last 10 days</div><div class="chart-wrap retention-legend-wrap"><canvas id="ch-retention"></canvas></div><div class="retention-legend" id="retention-legend"></div></div>
+    </div>
+    <div class="cta-wrap"><button class="cta" onclick="app.startSession()">Continue Learning<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button></div>
+  </div>
+
+  <!-- Flashcard -->
+  <div id="view-fc">
+    <div class="fc-top">
+      <button class="fc-back" onclick="app.exitSession()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="fc-ctrs">
+        <div class="fc-ctr"><div class="fc-ctr-v" id="fc-new">0</div><div class="fc-ctr-l">Learned</div></div>
+        <div class="fc-ctr"><div class="fc-ctr-v" id="fc-rev">0</div><div class="fc-ctr-l">Reviewed</div></div>
+        <div class="fc-ctr"><div class="fc-ctr-v" id="fc-left">0</div><div class="fc-ctr-l">Left</div></div>
+      </div>
+      <div style="width:34px"></div>
+    </div>
+    <div class="fc-progress-bar"><div class="fc-progress-fill" id="fc-prog" style="width:0%"></div></div>
+    <div class="fc-body" id="fc-body" onclick="app.reveal()">
+      <div class="fc-word" id="fc-word"></div>
+      <div class="fc-phonetic" id="fc-phonetic-wrap">
+        <span id="fc-ph"></span>
+        <button onclick="event.stopPropagation();app.speak()" title="Listen">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        </button>
+      </div>
+      <div class="fc-hint" id="fc-hint">tap to reveal · space</div>
+      <div class="fc-reveal" id="fc-reveal">
+        <div class="fc-example" id="fc-ex-wrap">
+          <div class="fc-ex-sent" id="fc-ex-sent"></div>
+          <div class="fc-ex-tr" id="fc-ex-tr"></div>
+        </div>
+        <div class="fc-def">
+          <span class="fc-pos-badge" id="fc-pos"></span>
+          <span class="fc-trans" id="fc-trans"></span>
+        </div>
+      </div>
+    </div>
+    <div class="fc-foot">
+      <div class="fc-btns" id="fc-btns">
+        <button class="fc-btn btn-again" onclick="app.rate(0)">Again<span class="fc-btn-key">Q</span></button>
+        <button class="fc-btn btn-hard" onclick="app.rate(1)">Hard<span class="fc-btn-key">W</span></button>
+        <button class="fc-btn btn-ok" onclick="app.rate(2)">OK<span class="fc-btn-key">E</span></button>
+        <button class="fc-btn btn-easy" onclick="app.rate(3)">Easy<span class="fc-btn-key">R</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done -->
+  <div id="view-done">
+    <div class="done-title">Session Complete</div>
+    <div class="done-sub">Great work — come back tomorrow to keep your streak alive.</div>
+    <div class="done-stats">
+      <div class="done-s"><div class="done-sval" id="done-new">0</div><div class="done-slbl">New Learned</div></div>
+      <div class="done-s"><div class="done-sval" id="done-rev">0</div><div class="done-slbl">Reviewed</div></div>
+      <div class="done-s"><div class="done-sval" id="done-streak">0</div><div class="done-slbl">Day Streak</div></div>
+    </div>
+    <div class="done-actions">
+      <button class="btn-share" onclick="app.shareProgress()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share Progress</button>
+      <button class="cta" onclick="app.showDash()">Back to Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PURCHASE MODAL ══ -->
+<div id="purchase-modal" onclick="app.closePurchase(event)">
+  <div class="purchase-panel" style="position:relative">
+    <button class="purchase-close" onclick="app.closePurchase()">✕</button>
+    <div class="purchase-title">Unlock Vocabulary</div>
+    <div class="purchase-sub">Rate: 20 words per $1</div>
+    <div class="balance-row">
+      <span class="balance-label">Words unlocked</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="words-unlocked-badge" id="unlocked-badge">100 free</span>
+        <span class="balance-val" id="balance-total">100 / ∞</span>
+      </div>
+    </div>
+    <div class="purchase-section">
+      <div class="purchase-section-title">Word Packs</div>
+      <div id="pack-options"></div>
+    </div>
+    <div class="purchase-section">
+      <div class="purchase-section-title">Streak Recovery</div>
+      <div class="streak-box">
+        <div class="streak-box-left"><div class="streak-fire">🔥</div><div><div class="streak-info-title">Restore broken streak</div><div class="streak-info-sub">Recover your lost streak for $3</div></div></div>
+        <button class="btn-buy-streak" onclick="app.buyStreak()">$3</button>
+      </div>
+    </div>
+    <button class="btn-purchase-confirm" onclick="app.confirmPurchase()">Purchase Selected Pack</button>
+    <button class="btn-purchase-cancel" onclick="app.closePurchase()">Cancel</button>
+  </div>
+</div>
+
+<!-- ══ SETTINGS ══ -->
+<div id="view-settings" onclick="app.closeSettings(event)">
+  <div class="settings-panel" id="settings-panel">
+    <div class="settings-h">Settings</div>
+    <div class="settings-sec">
+      <div class="settings-sec-title">Learning</div>
+      <div class="settings-row">
+        <div class="settings-label">New words per session <span id="s-daily-val">10</span></div>
+        <input type="range" id="s-daily" min="5" max="50" step="5" value="10" oninput="document.getElementById('s-daily-val').textContent=this.value">
+        <div class="tick-row"><span>5</span><span>10</span><span>20</span><span>30</span><span>50</span></div>
+        <div class="settings-sub">Finish due reviews before new words unlock.</div>
+      </div>
+    </div>
+    <div class="settings-sec">
+      <div class="settings-sec-title">Audio</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Auto-pronounce</div><div class="toggle-sub">Speak each word automatically when card appears</div></div>
+        <div class="toggle" id="toggle-auto-speak" onclick="app.toggleSetting('autoSpeak')"></div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Slow speech</div><div class="toggle-sub">Reduce speech rate for clarity</div></div>
+        <div class="toggle" id="toggle-slow" onclick="app.toggleSetting('slowSpeech')"></div>
+      </div>
+    </div>
+    <div class="settings-sec">
+      <div class="settings-sec-title">Import Anki Deck (.apkg)</div>
+      <div class="import-box" onclick="document.getElementById('anki-file').click()">
+        <div class="import-box-title">Drop or click to import .apkg</div>
+        <div class="import-box-sub">Replaces vocabulary for the current language</div>
+      </div>
+      <input type="file" id="anki-file" accept=".apkg" style="display:none" onchange="app.importAnki(this)">
+    </div>
+    <button class="save-btn" onclick="app.saveSettings()">Save Settings</button>
+  </div>
+</div>
+
+<canvas id="share-canvas" style="display:none" width="600" height="360"></canvas>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// LANGUAGE CONFIG
+// ═══════════════════════════════════════════════════════════
+const LANGS = {
+  de: { name:'Deutsch', flag:'🇩🇪', code:'de-DE', lists: null },
+  fr: { name:'Français', flag:'🇫🇷', code:'fr-FR', lists: null },
+  es: { name:'Español',  flag:'🇪🇸', code:'es-ES', lists: null },
+  la: { name:'Latina',   flag:'🏛️', code:'la',    lists: null },
+};
+
+// German + Latin loaded from separate files
+LANGS.de.lists = typeof VOCAB_DE !== 'undefined' ? VOCAB_DE : {};
+LANGS.la.lists = typeof VOCAB_LA !== 'undefined' ? VOCAB_LA : {};
+
+const CEFR_THRESHOLDS = [
+  {level:'A1',min:0,max:600},
+  {level:'A2',min:600,max:1200},
+  {level:'B1',min:1200,max:2500},
+  {level:'B2',min:2500,max:5000},
+  {level:'C1',min:5000,max:10000},
+  {level:'C2',min:10000,max:20000},
+];
+
+// ═══════════════════════════════════════════════════════════
+// APP
+// ═══════════════════════════════════════════════════════════
+const app = (() => {
+  const TODAY = () => new Date().toISOString().slice(0,10);
+
+  let state = {
+    lang: 'de', list: null,
+    settings: { daily:10, autoSpeak:false, slowSpeech:false },
+    srs: {}, dailyStats: {}, streak:0, lastStudy:null,
+    unlockedWords: 100, // free tier
+    streakProtected: false,
+  };
+
+  let session = { queue:[], againQueue:[], idx:0, revealed:false, newCnt:0, revCnt:0, total:0 };
+  let charts = {};
+  let selectedPack = null;
+
+  // ── Persistence ──
+  function save() { try { localStorage.setItem('vocab2', JSON.stringify(state)); } catch(e){} }
+  function load() {
+    try {
+      const d = localStorage.getItem('vocab2');
+      if (d) { const p = JSON.parse(d); Object.keys(p).forEach(k => { if(k in state) state[k]=p[k]; }); }
+    } catch(e){}
+  }
+
+  // ── Vocab loading ──
+  async function loadVocab() {
+    // VOCAB_DATA is loaded from vocab-data.js (avoids file:// fetch restrictions)
+    const d = typeof VOCAB_DATA !== 'undefined' ? VOCAB_DATA : {};
+    LANGS.es.lists = d.es || {};
+    LANGS.fr.lists = d.fr || {};
+  }
+
+  function getLists(lang) { return LANGS[lang].lists || {}; }
+  function getWords(lang, list) { return getLists(lang)[list] || []; }
+  function getListNames(lang) { return Object.keys(getLists(lang)); }
+
+  function getFirstList(lang) {
+    const names = getListNames(lang);
+    return names.length ? names[0] : null;
+  }
+
+  // ── SRS ──
+  function getSRS(id) {
+    if (!state.srs[id]) state.srs[id] = {interval:0,ef:2.5,reps:0,nextReview:null,state:'new',lastReviewed:null};
+    return state.srs[id];
+  }
+
+  function applyRating(id, q) {
+    const s = getSRS(id);
+    const today = TODAY();
+    s.lastReviewed = today;
+    const wasNew = s.state === 'new';
+    if (q===0) { s.reps=0; s.interval=0; s.ef=Math.max(1.3,s.ef-.2); s.nextReview=today; s.state='learning'; }
+    else {
+      if (q===1) { s.interval=Math.max(1,Math.round(s.interval*1.2)); s.ef=Math.max(1.3,s.ef-.15); }
+      else if (q===2) { if(s.reps===0)s.interval=1; else if(s.reps===1)s.interval=4; else s.interval=Math.round(s.interval*s.ef); }
+      else { s.interval=s.reps===0?4:Math.round(s.interval*s.ef*1.3); s.ef=Math.min(3.0,s.ef+.15); }
+      s.reps++;
+      const d=new Date(); d.setDate(d.getDate()+s.interval);
+      s.nextReview=d.toISOString().slice(0,10);
+      s.state=s.interval>=21?'mastered':'learning';
+    }
+    if (!state.dailyStats[today]) state.dailyStats[today]={newLearned:0,reviewed:0};
+    if (wasNew && q!==0) state.dailyStats[today].newLearned++;
+    else if (!wasNew && q!==0) state.dailyStats[today].reviewed++;
+    save();
+    return wasNew && q!==0;
+  }
+
+  function computeStreak() {
+    let streak=0, d=new Date(TODAY());
+    for (let i=0;i<365;i++) {
+      const ds=d.toISOString().slice(0,10);
+      const s=state.dailyStats[ds]||{};
+      if ((s.newLearned||0)+(s.reviewed||0)>0) { streak++; d.setDate(d.getDate()-1); }
+      else if (i===0) { d.setDate(d.getDate()-1); } // today might be 0 yet
+      else break;
+    }
+    return streak;
+  }
+
+  function getStats(lang, list) {
+    const words = getWords(lang, list);
+    const today = TODAY();
+    let toReview=0, mastered=0, learning=0, newW=0;
+    for (const w of words) {
+      const s = getSRS(w.id);
+      if (s.state==='new') newW++;
+      else if (s.state==='mastered') mastered++;
+      else learning++;
+      if (s.nextReview && s.nextReview<=today && s.state!=='new') toReview++;
+    }
+    const ds = state.dailyStats[today]||{};
+    const newToday = ds.newLearned||0;
+    return { toReview, mastered, learning, newW, total:words.length, newToday };
+  }
+
+  function cefrFromMastered(total) {
+    for (const t of CEFR_THRESHOLDS) {
+      if (total >= t.min && total < t.max) return t;
+    }
+    return CEFR_THRESHOLDS[CEFR_THRESHOLDS.length-1];
+  }
+
+  // ── Sidebar ──
+  function renderSidebar() {
+    // Lang buttons
+    const row = document.getElementById('lang-row');
+    row.innerHTML = '';
+    Object.keys(LANGS).forEach(code => {
+      const b = document.createElement('button');
+      b.className = 'lang-btn' + (code===state.lang?' active':'');
+      b.textContent = LANGS[code].flag + ' ' + code.toUpperCase();
+      b.onclick = () => setLang(code);
+      row.appendChild(b);
+    });
+
+    // List items
+    const container = document.getElementById('list-items');
+    container.innerHTML = '';
+    const lists = getListNames(state.lang);
+    lists.forEach(name => {
+      const el = document.createElement('div');
+      el.className = 'sb-item' + (name===state.list?' active':'');
+      el.dataset.list = name;
+      const s = getStats(state.lang, name);
+      const pct = s.total ? Math.round(s.mastered/s.total*100) : 0;
+      el.innerHTML = `<div class="sb-item-name">${name}</div><div class="sb-item-meta">${s.total} words · ${pct}% mastered</div>`;
+      container.appendChild(el);
+    });
+
+    // CEFR bar
+    const allWords = lists.reduce((acc,l) => acc + getWords(state.lang,l).length, 0);
+    let mastered = 0;
+    lists.forEach(l => { mastered += getStats(state.lang,l).mastered; });
+    const cefr = cefrFromMastered(mastered);
+    const pct = Math.min(100, ((mastered - cefr.min)/(cefr.max - cefr.min))*100);
+    document.getElementById('cefr-fill').style.width = pct + '%';
+    document.getElementById('cefr-level-text').textContent = cefr.level + ' · ' + mastered + ' mastered';
+
+    initScrollListener();
+    updateScrollCursor();
+  }
+
+  let scrollTimer = null;
+  function initScrollListener() {
+    const scroller = document.getElementById('list-scroll');
+    scroller.onscroll = () => {
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        const items = document.querySelectorAll('.sb-item');
+        const center = scroller.scrollTop + scroller.clientHeight/2;
+        let closest = null, minDist = Infinity;
+        items.forEach(item => {
+          const ic = item.offsetTop + item.clientHeight/2;
+          const dist = Math.abs(center - ic);
+          if (dist < minDist) { minDist = dist; closest = item; }
+          const rel = dist / scroller.clientHeight;
+          item.classList.toggle('near', rel < 0.3 && item !== closest);
+        });
+        if (closest && closest.dataset.list !== state.list) {
+          state.list = closest.dataset.list;
+          save();
+          document.querySelectorAll('.sb-item').forEach(i => i.classList.toggle('active', i===closest));
+          renderDashboard();
+        }
+      }, 80);
+    };
+  }
+
+  function scrollToActive() {
+    const scroller = document.getElementById('list-scroll');
+    const activeEl = scroller.querySelector('.sb-item.active');
+    if (activeEl) {
+      const targetScrollTop = activeEl.offsetTop - scroller.clientHeight/2 + activeEl.clientHeight/2;
+      scroller.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+    }
+  }
+
+  function updateScrollCursor() {
+    // The cursor bar sits at vertical center of scroll wrap; show only when items exist
+    const cursor = document.getElementById('list-scroll-cursor');
+    if (!cursor) return;
+    const items = document.querySelectorAll('.sb-item');
+    cursor.style.opacity = items.length > 0 ? '1' : '0';
+  }
+
+  // ── Dashboard ──
+  function renderDashboard() {
+    if (!state.list) { state.list = getFirstList(state.lang); }
+    const stats = getStats(state.lang, state.list);
+    const today = TODAY();
+    document.getElementById('dash-title').textContent = state.list || '—';
+    document.getElementById('dash-total').textContent = stats.total;
+    document.getElementById('dash-mastered').textContent = stats.mastered;
+    const newLeft = Math.max(0, state.settings.daily - (state.dailyStats[today]?.newLearned||0));
+    document.getElementById('dash-review').textContent = stats.toReview;
+    document.getElementById('dash-new').textContent = newLeft;
+    document.getElementById('dash-streak').innerHTML = computeStreak() + '<span class="stat-unit">d</span>';
+    const pct = stats.total ? Math.round(stats.mastered/stats.total*100) : 0;
+    document.getElementById('dash-pct').innerHTML = pct + '<span class="stat-unit">%</span>';
+    document.getElementById('dash-pct-sub').textContent = stats.mastered + '/' + stats.total;
+    const unlInfo = document.getElementById('dash-unlocked-info');
+    unlInfo.innerHTML = 'Unlocked <b>' + state.unlockedWords + '</b> words';
+
+    renderDonut(stats);
+    renderLine();
+    renderBar();
+    renderHeatmap();
+    renderAllProgress();
+    renderRetention();
+  }
+
+  function renderDonut(stats) {
+    const ctx = document.getElementById('ch-donut').getContext('2d');
+    if (charts.donut) charts.donut.destroy();
+    charts.donut = new Chart(ctx, { type:'doughnut', data: {
+      labels:['New','Learning','Mastered'],
+      datasets:[{data:[stats.newW,stats.learning,stats.mastered],backgroundColor:['#e8e8e8','#93c5fd','#111'],borderWidth:0,hoverOffset:4}]
+    }, options:{ cutout:'68%',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'right',labels:{font:{size:11,family:'Inter'},color:'#555',boxWidth:9,padding:8}}}
+    }});
+  }
+
+  function renderLine() {
+    const ctx = document.getElementById('ch-line').getContext('2d');
+    if (charts.line) charts.line.destroy();
+    const days=[]; const d=new Date();
+    for(let i=29;i>=0;i--){const dd=new Date(d);dd.setDate(d.getDate()-i);days.push(dd.toISOString().slice(0,10));}
+    const vals=days.map(d=>{const s=state.dailyStats[d]||{};return (s.newLearned||0)+(s.reviewed||0);});
+    charts.line=new Chart(ctx,{type:'line',data:{
+      labels:days.map((d,i)=>i%7===0?d.slice(5):''),
+      datasets:[{data:vals,borderColor:'#111',borderWidth:1.5,fill:true,backgroundColor:'rgba(0,0,0,.04)',pointRadius:0,tension:.4}]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:'#bbb',font:{size:9}}},y:{min:0,grid:{color:'#f0f0f0'},ticks:{color:'#bbb',font:{size:9},maxTicksLimit:4}}}
+    }});
+  }
+
+  function renderBar() {
+    const ctx = document.getElementById('ch-bar').getContext('2d');
+    if (charts.bar) charts.bar.destroy();
+    const days=[]; const d=new Date();
+    for(let i=13;i>=0;i--){const dd=new Date(d);dd.setDate(d.getDate()-i);days.push(dd.toISOString().slice(0,10));}
+    charts.bar=new Chart(ctx,{type:'bar',data:{
+      labels:days.map(d=>d.slice(5)),
+      datasets:[
+        {label:'New',data:days.map(d=>(state.dailyStats[d]||{}).newLearned||0),backgroundColor:'#111',borderRadius:3,stack:'a'},
+        {label:'Review',data:days.map(d=>(state.dailyStats[d]||{}).reviewed||0),backgroundColor:'#ccc',borderRadius:3,stack:'a'}
+      ]
+    },options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{size:10},color:'#888',boxWidth:8,padding:6}}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#bbb',font:{size:9},maxRotation:45}},
+              y:{stacked:true,min:0,grid:{color:'#f0f0f0'},ticks:{color:'#bbb',font:{size:9},maxTicksLimit:4}}}
+    }});
+  }
+
+  function renderHeatmap() {
+    const grid=document.getElementById('hm-grid'), months=document.getElementById('hm-months');
+    grid.innerHTML=''; months.innerHTML='';
+    const total=52*7; const base=new Date(); base.setDate(base.getDate()-(total-1));
+    const monthLabels={};
+    for(let i=0;i<total;i++){
+      const d=new Date(base); d.setDate(base.getDate()+i);
+      const ds=d.toISOString().slice(0,10);
+      const s=state.dailyStats[ds]||{};
+      const n=(s.newLearned||0)+(s.reviewed||0);
+      const v=n===0?0:n<5?1:n<10?2:n<20?3:4;
+      const cell=document.createElement('div');
+      cell.className='hm-cell'; cell.setAttribute('data-v',v); cell.title=ds+': '+n;
+      grid.appendChild(cell);
+      const mo=d.toLocaleString('default',{month:'short'});
+      if(!monthLabels[mo]) monthLabels[mo]=true;
+    }
+    months.textContent=Object.keys(monthLabels).join('  ·  ');
+  }
+
+  function renderRetention() {
+    const ctx = document.getElementById('ch-retention').getContext('2d');
+    if (charts.retention) charts.retention.destroy();
+
+    // Gather all SRS data across ALL lists for this language
+    const allWords = [];
+    getListNames(state.lang).forEach(l => getWords(state.lang, l).forEach(w => allWords.push(w)));
+
+    // For each of the last 10 days, compute retention counts
+    const DAYS = 10;
+    const labels = [];
+    const series = { total:[], d10:[], d30:[], d60:[], d90:[] };
+
+    for (let i = DAYS-1; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const ds = d.toISOString().slice(0,10);
+      labels.push(i === 0 ? 'Today' : i === 1 ? 'Yesterday' : i + 'd ago');
+
+      let total=0, cnt10=0, cnt30=0, cnt60=0, cnt90=0;
+      allWords.forEach(w => {
+        const s = getSRS(w.id);
+        if (!s.lastReviewed || s.lastReviewed > ds) return; // not yet seen on that day
+        total++;
+        if (s.interval >= 10)  cnt10++;
+        if (s.interval >= 30)  cnt30++;
+        if (s.interval >= 60)  cnt60++;
+        if (s.interval >= 90)  cnt90++;
+      });
+      series.total.push(total);
+      series.d10.push(cnt10);
+      series.d30.push(cnt30);
+      series.d60.push(cnt60);
+      series.d90.push(cnt90);
+    }
+
+    const COLORS = ['#e07040','#d4a017','#5bbfad','#2e8b7a','#1a5c4a'];
+    const LABELS = [
+      'All SRS words',
+      'Retention >10 days',
+      'Retention >30 days',
+      'Retention >60 days',
+      'Retention >90 days',
+    ];
+    const datasets = [
+      {label:LABELS[0], data:series.total, borderColor:COLORS[0], borderWidth:2, pointRadius:3, pointBackgroundColor:COLORS[0], fill:false, tension:.3},
+      {label:LABELS[1], data:series.d10,   borderColor:COLORS[1], borderWidth:2, pointRadius:3, pointBackgroundColor:COLORS[1], fill:false, tension:.3},
+      {label:LABELS[2], data:series.d30,   borderColor:COLORS[2], borderWidth:2, pointRadius:3, pointBackgroundColor:COLORS[2], fill:false, tension:.3},
+      {label:LABELS[3], data:series.d60,   borderColor:COLORS[3], borderWidth:2, pointRadius:3, pointBackgroundColor:COLORS[3], fill:false, tension:.3},
+      {label:LABELS[4], data:series.d90,   borderColor:COLORS[4], borderWidth:2, pointRadius:3, pointBackgroundColor:COLORS[4], fill:false, tension:.3},
+    ];
+
+    charts.retention = new Chart(ctx, {
+      type:'line', data:{ labels, datasets },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        interaction:{ mode:'index', intersect:false },
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ grid:{color:'#f5f5f5'}, ticks:{color:'#999',font:{size:10}} },
+          y:{ min:0, grid:{color:'#f5f5f5'}, ticks:{color:'#999',font:{size:10},maxTicksLimit:6} }
+        }
+      }
+    });
+
+    // Custom legend below chart
+    const legEl = document.getElementById('retention-legend');
+    legEl.innerHTML = datasets.map((ds,i) => {
+      const last = ds.data[ds.data.length-1];
+      const total2 = series.total[series.total.length-1]||1;
+      const pct = total2 ? (last/total2*100).toFixed(1) : '0.0';
+      return `<div class="ret-leg-item"><div class="ret-leg-dot" style="background:${COLORS[i]}"></div>${LABELS[i]} <b>${last}</b>${i>0?' | '+pct+'%':''}</div>`;
+    }).join('');
+  }
+
+  function renderAllProgress() {
+    const el = document.getElementById('all-prog'); el.innerHTML='';
+    getListNames(state.lang).forEach(name => {
+      const s=getStats(state.lang,name);
+      const pct=s.total?Math.round(s.mastered/s.total*100):0;
+      el.innerHTML+=`<div class="prog-item"><div class="prog-item-row"><span class="prog-name">${name}</span><span class="prog-pct">${pct}% · ${s.mastered}/${s.total}</span></div><div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div></div>`;
+    });
+  }
+
+  // ── Session ──
+  function startSession() {
+    const words = getWords(state.lang, state.list);
+    const today = TODAY();
+    const newLeft = Math.max(0, state.settings.daily - (state.dailyStats[today]?.newLearned||0));
+    const unlockedWords = words.slice(0, state.unlockedWords);
+
+    const due = unlockedWords.filter(w => {
+      const s=getSRS(w.id); return s.state!=='new' && s.nextReview && s.nextReview<=today;
+    });
+    const newW = unlockedWords.filter(w => getSRS(w.id).state==='new').slice(0,newLeft);
+    const queue = [...due, ...newW];
+
+    if (!queue.length) { showDone(0,0); return; }
+    session = {queue:[...queue],againQueue:[],idx:0,revealed:false,newCnt:0,revCnt:0,total:queue.length};
+    showView('fc');
+    renderCard();
+  }
+
+  function renderCard() {
+    if (session.idx >= session.queue.length) {
+      if (session.againQueue.length) {
+        session.queue=[...session.againQueue]; session.idx=0; session.againQueue=[];
+        renderCard(); return;
+      }
+      showDone(session.newCnt, session.revCnt); return;
+    }
+    const w = session.queue[session.idx];
+    session.revealed = false;
+
+    document.getElementById('fc-word').textContent = w.w;
+    const hasPhonetic = w.ph && w.ph.length > 0;
+    const phWrap = document.getElementById('fc-phonetic-wrap');
+    phWrap.style.display = hasPhonetic ? 'inline-flex' : 'none';
+    document.getElementById('fc-ph').textContent = w.ph||'';
+    document.getElementById('fc-pos').textContent = w.pos||'';
+    document.getElementById('fc-trans').textContent = w.tr||'';
+    const hasSent = w.ex && w.ex.length > 0;
+    document.getElementById('fc-ex-wrap').style.display = hasSent ? 'block' : 'none';
+    document.getElementById('fc-ex-sent').textContent = w.ex||'';
+    document.getElementById('fc-ex-tr').textContent = w.exTr ? '— ' + w.exTr : '';
+    document.getElementById('fc-hint').style.display='';
+    document.getElementById('fc-reveal').classList.remove('show');
+    document.getElementById('fc-btns').classList.remove('show');
+    document.getElementById('fc-new').textContent = session.newCnt;
+    document.getElementById('fc-rev').textContent = session.revCnt;
+    document.getElementById('fc-left').textContent = session.queue.length - session.idx + session.againQueue.length;
+
+    const total = session.total + session.againQueue.length;
+    const done = session.newCnt + session.revCnt;
+    document.getElementById('fc-prog').style.width = (total > 0 ? done/total*100 : 0) + '%';
+
+    if (state.settings.autoSpeak) setTimeout(() => speak(), 300);
+  }
+
+  function reveal() {
+    if (session.revealed) return;
+    session.revealed = true;
+    document.getElementById('fc-hint').style.display='none';
+    document.getElementById('fc-reveal').classList.add('show');
+    document.getElementById('fc-btns').classList.add('show');
+  }
+
+  function rate(q) {
+    if (!session.revealed) { reveal(); return; }
+    const w = session.queue[session.idx];
+    const becameNew = applyRating(w.id, q);
+    if (q===0) { session.againQueue.push(w); }
+    else { if(getSRS(w.id).reps===1) session.newCnt++; else session.revCnt++; }
+    session.idx++;
+    renderCard();
+  }
+
+  function speak() {
+    if (!window.speechSynthesis) return;
+    const w = session.queue[session.idx];
+    if (!w) return;
+    const text = w.w.replace(/^(der|die|das|le|la|l'|el|la|los|las)\s/i,'');
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = LANGS[state.lang].code;
+    utter.rate = state.settings.slowSpeech ? 0.7 : 0.9;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  }
+
+  function exitSession() { showDash(); }
+
+  function showDone(n, r) {
+    document.getElementById('done-new').textContent = n;
+    document.getElementById('done-rev').textContent = r;
+    document.getElementById('done-streak').textContent = computeStreak();
+    showView('done');
+  }
+
+  // ── Share Progress (Canvas) ──
+  function shareProgress() {
+    const canvas = document.getElementById('share-canvas');
+    canvas.width = 640; canvas.height = 500;
+    const ctx = canvas.getContext('2d');
+    const W=640, H=500;
+    ctx.clearRect(0,0,W,H);
+
+    // Background
+    ctx.fillStyle='#0f1729'; ctx.roundRect(0,0,W,H,20); ctx.fill();
+
+    // Gradient overlay
+    const g=ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,'rgba(255,255,255,.05)'); g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+    // Language flag & title
+    ctx.font='bold 26px Inter, sans-serif'; ctx.fillStyle='#fff';
+    ctx.fillText(LANGS[state.lang].flag + '  Vocab · ' + LANGS[state.lang].name, 36, 54);
+
+    ctx.font='13px Inter, sans-serif'; ctx.fillStyle='rgba(255,255,255,.45)';
+    ctx.fillText(new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}), 36, 76);
+
+    // Stats row
+    const today = TODAY();
+    const ds = state.dailyStats[today]||{};
+    const newL = ds.newLearned||0, rev = ds.reviewed||0;
+    const streak = computeStreak();
+    const lists = getListNames(state.lang);
+    let totalMastered = 0;
+    lists.forEach(l => { totalMastered += getStats(state.lang,l).mastered; });
+    const cefr = cefrFromMastered(totalMastered);
+
+    const stats = [
+      {label:'New', val:String(newL)},
+      {label:'Reviewed', val:String(rev)},
+      {label:'Streak', val:streak+'d'},
+      {label:'Mastered', val:String(totalMastered)},
+    ];
+    stats.forEach((s,i) => {
+      const x = 36 + i*150, y = 140;
+      ctx.font='bold 38px Inter, sans-serif'; ctx.fillStyle='#fff';
+      ctx.fillText(s.val, x, y);
+      ctx.font='10px Inter, sans-serif'; ctx.fillStyle='rgba(255,255,255,.45)';
+      ctx.fillText(s.label.toUpperCase(), x, y+18);
+    });
+
+    // CEFR badge
+    ctx.fillStyle='rgba(255,255,255,.1)';
+    ctx.beginPath(); ctx.roundRect(36, 178, 160, 44, 10); ctx.fill();
+    ctx.font='bold 20px Inter, sans-serif'; ctx.fillStyle='#fff';
+    ctx.fillText('Level ' + cefr.level, 52, 205);
+    ctx.font='10px Inter, sans-serif'; ctx.fillStyle='rgba(255,255,255,.45)';
+    ctx.fillText(totalMastered + ' / ' + cefr.max + ' words', 52, 219);
+
+    // CEFR progress bar
+    const barX=36, barY=242, barW=568, barH=6;
+    ctx.fillStyle='rgba(255,255,255,.12)'; ctx.beginPath(); ctx.roundRect(barX,barY,barW,barH,3); ctx.fill();
+    const progPct=Math.min(1,(totalMastered-cefr.min)/(cefr.max-cefr.min));
+    ctx.fillStyle='rgba(255,255,255,.85)'; ctx.beginPath(); ctx.roundRect(barX,barY,barW*progPct,barH,3); ctx.fill();
+
+    // ── Streak Calendar (last 16 weeks) ──
+    ctx.font='10px Inter, sans-serif'; ctx.fillStyle='rgba(255,255,255,.4)';
+    ctx.fillText('ACTIVITY · LAST 16 WEEKS', 36, 274);
+
+    const CAL_TOP = 284;
+    const WEEKS = 16, ROWS = 7;
+    const cellSize = Math.floor((barW - (WEEKS-1)*3) / WEEKS); // ~32px
+    const gap = 3;
+    const totalDays = WEEKS * ROWS;
+    const base = new Date(); base.setDate(base.getDate() - (totalDays - 1));
+
+    for (let w = 0; w < WEEKS; w++) {
+      for (let r = 0; r < ROWS; r++) {
+        const dayIdx = w * ROWS + r;
+        const d = new Date(base); d.setDate(base.getDate() + dayIdx);
+        const dStr = d.toISOString().slice(0,10);
+        const st = state.dailyStats[dStr]||{};
+        const n = (st.newLearned||0)+(st.reviewed||0);
+        const cx = barX + w*(cellSize+gap);
+        const cy = CAL_TOP + r*(cellSize+gap);
+        // Color based on activity
+        let alpha;
+        if (n === 0) alpha = 0.08;
+        else if (n < 5) alpha = 0.3;
+        else if (n < 15) alpha = 0.55;
+        else if (n < 30) alpha = 0.78;
+        else alpha = 1.0;
+        ctx.fillStyle = `rgba(99,210,170,${alpha})`;
+        ctx.beginPath(); ctx.roundRect(cx, cy, cellSize, cellSize, 2); ctx.fill();
+      }
+    }
+
+    // Month labels above calendar
+    ctx.font='9px Inter, sans-serif'; ctx.fillStyle='rgba(255,255,255,.35)';
+    let lastMonth = '';
+    for (let w = 0; w < WEEKS; w++) {
+      const dayIdx = w * ROWS;
+      const d = new Date(base); d.setDate(base.getDate() + dayIdx);
+      const mo = d.toLocaleString('default',{month:'short'});
+      if (mo !== lastMonth) {
+        ctx.fillText(mo, barX + w*(cellSize+gap), CAL_TOP - 4);
+        lastMonth = mo;
+      }
+    }
+
+    // Footer
+    ctx.font='11px Inter, sans-serif'; ctx.fillStyle='rgba(255,255,255,.2)';
+    ctx.fillText('vocab-app', 36, H-18);
+
+    // Download
+    const link = document.createElement('a');
+    link.download = 'vocab-progress.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  // ── Purchase ──
+  const PACKS = [
+    {id:'p1', words:100, price:5,  label:'Starter Pack'},
+    {id:'p2', words:300, price:15, label:'Standard Pack'},
+    {id:'p3', words:600, price:30, label:'Advanced Pack'},
+    {id:'p4', words:1500,price:75, label:'Full Access'},
+  ];
+
+  function openPurchase() {
+    document.getElementById('purchase-modal').style.display='flex';
+    renderPackOptions();
+  }
+
+  function renderPackOptions() {
+    document.getElementById('unlocked-badge').textContent = state.unlockedWords + ' unlocked';
+    document.getElementById('balance-total').textContent = state.unlockedWords + ' words';
+    const el = document.getElementById('pack-options');
+    el.innerHTML='';
+    PACKS.forEach(pack => {
+      const div=document.createElement('div');
+      div.className='pack-option'+(selectedPack===pack.id?' selected':'');
+      div.onclick=()=>{ selectedPack=pack.id; renderPackOptions(); };
+      div.innerHTML=`<div><div class="pack-name">${pack.label}</div><div class="pack-desc">+${pack.words} words · ${pack.words/20} words per dollar rate</div></div><div><div class="pack-price">$${pack.price}<span>/pack</span></div></div>`;
+      el.appendChild(div);
+    });
+  }
+
+  function confirmPurchase() {
+    if (!selectedPack) { alert('Please select a pack'); return; }
+    const pack = PACKS.find(p=>p.id===selectedPack);
+    if (!pack) return;
+    // Mock purchase
+    state.unlockedWords += pack.words;
+    save();
+    alert(`✓ Unlocked ${pack.words} more words! You now have ${state.unlockedWords} words unlocked.`);
+    closePurchase();
+    renderDashboard();
+    renderSidebar();
+  }
+
+  function buyStreak() {
+    if (computeStreak() > 0) { alert('Your streak is still active!'); return; }
+    state.streakProtected = true;
+    // Restore yesterday as active
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    const yd = yesterday.toISOString().slice(0,10);
+    if (!state.dailyStats[yd] || (state.dailyStats[yd].newLearned||0)+(state.dailyStats[yd].reviewed||0)===0) {
+      state.dailyStats[yd]={newLearned:1,reviewed:0};
+    }
+    save();
+    alert('🔥 Streak recovered! $3 charged (mock).');
+    closePurchase();
+    renderDashboard();
+  }
+
+  function closePurchase(e) {
+    if (e && e.target !== document.getElementById('purchase-modal')) return;
+    document.getElementById('purchase-modal').style.display='none';
+    selectedPack=null;
+  }
+
+  // ── Settings ──
+  function openSettings() {
+    document.getElementById('view-settings').style.display='block';
+    document.getElementById('s-daily').value=state.settings.daily;
+    document.getElementById('s-daily-val').textContent=state.settings.daily;
+    updateToggles();
+    setTimeout(()=>document.getElementById('settings-panel').classList.add('open'),10);
+  }
+
+  function updateToggles() {
+    document.getElementById('toggle-auto-speak').classList.toggle('on',!!state.settings.autoSpeak);
+    document.getElementById('toggle-slow').classList.toggle('on',!!state.settings.slowSpeech);
+  }
+
+  function toggleSetting(key) {
+    state.settings[key] = !state.settings[key];
+    updateToggles();
+  }
+
+  function closeSettings(e) {
+    if (e && e.target!==document.getElementById('view-settings')) return;
+    document.getElementById('settings-panel').classList.remove('open');
+    setTimeout(()=>document.getElementById('view-settings').style.display='none',300);
+  }
+
+  function saveSettings() {
+    state.settings.daily = parseInt(document.getElementById('s-daily').value);
+    save();
+    closeSettings();
+    renderDashboard();
+  }
+
+  // ── Import Anki ──
+  async function importAnki(input) {
+    const file = input.files[0];
+    if (!file) return;
+    alert('Anki import detected: ' + file.name + '\nFull .apkg parsing requires a server. Feature coming soon.\nFor now, vocabulary is loaded from the bundled data.');
+    input.value='';
+  }
+
+  // ── Lang / List ──
+  function setLang(code) {
+    state.lang = code;
+    state.list = getFirstList(code);
+    save();
+    renderSidebar();
+    renderDashboard();
+    scrollToActive();
+  }
+
+  // ── Views ──
+  function showView(name) {
+    document.getElementById('view-dashboard').style.display = name==='dash'?'block':'none';
+    const fc=document.getElementById('view-fc');
+    fc.style.display=name==='fc'?'flex':'none';
+    const done=document.getElementById('view-done');
+    done.style.display=name==='done'?'flex':'none';
+  }
+
+  function showDash() {
+    showView('dash');
+    renderSidebar();
+    renderDashboard();
+    scrollToActive();
+  }
+
+  // ── Keyboard ──
+  function initKeys() {
+    document.addEventListener('keydown', e => {
+      if (document.getElementById('view-fc').style.display!=='flex') return;
+      if (['input','textarea'].includes(document.activeElement.tagName.toLowerCase())) return;
+      if (e.key===' ') { e.preventDefault(); reveal(); return; }
+      const map={q:0,w:1,e:2,r:3};
+      if (e.key.toLowerCase() in map) rate(map[e.key.toLowerCase()]);
+    });
+  }
+
+  // ── Init ──
+  async function init() {
+    load();
+    await loadVocab();
+    if (!state.list || !getLists(state.lang)[state.list]) {
+      state.list = getFirstList(state.lang);
+    }
+    initKeys();
+    showDash();
+  }
+
+  return {
+    init, setLang, startSession, reveal, rate, speak, exitSession,
+    openPurchase, closePurchase, confirmPurchase, buyStreak,
+    openSettings, closeSettings, saveSettings, toggleSetting,
+    shareProgress, showDash, importAnki
+  };
+})();
+
+app.init();
+</script>
+</body>
+</html>
