@@ -1,4 +1,4 @@
-# Vocab App
+# Vocabulum App
 
 A spaced-repetition vocabulary learning web app for **German**, **French**, **Spanish**, and **Latin**. Runs entirely in the browser with no backend required.
 
